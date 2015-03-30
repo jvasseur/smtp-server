@@ -2,6 +2,8 @@
 
 namespace Jhome\Smtp\Server;
 
+use React\Socket\Connection;
+
 class ConnectionHandler
 {
     const STATE_COMMAND = 0;
@@ -12,15 +14,21 @@ class ConnectionHandler
      */
     private $server;
 
+    /**
+     * @var Connection
+     */
     private $conn;
 
     private $state = self::STATE_COMMAND;
 
     private $buffer = '';
 
+    /**
+     * @var Mail|null
+     */
     private $mail = null;
 
-    public function __construct(Server $server, $conn)
+    public function __construct(Server $server, Connection $conn)
     {
         $this->server = $server;
         $this->conn = $conn;
@@ -37,19 +45,29 @@ class ConnectionHandler
                 $this->handleCommand($command);
             }
         } else {
-            if (false !== strpos($this->buffer, "\r\n.\r\n")) {
-                list($data, $this->buffer) = explode("\r\n.\r\n", $this->buffer, 2);
+            $lines = explode("\r\n", $this->buffer);
+            $this->buffer = array_pop($lines);
 
-                $this->handleData($data . "\r\n");
+            if ($end = '.' === end($lines)) {
+                array_pop($lines);
+            }
+
+            $data = '';
+            foreach ($lines as $line) {
+                if ('..' === substr($line, 0, 2)) {
+                    $data .= substr($line, 1) . "\r\n";
+                } else {
+                    $data .= $line . "\r\n";
+                }
+            }
+
+            $this->mail->emit('data', [$data]);
+
+            if ($end) {
                 $this->mail->emit('end');
 
                 $this->state = self::STATE_COMMAND;
                 $this->push('250 Ok');
-            } else {
-                $data = $this->buffer;
-                $this->buffer = '';
-
-                $this->handleData($data);
             }
         }
     }
