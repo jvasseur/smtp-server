@@ -81,6 +81,8 @@ class ConnectionHandler
             list($command, $arg) = explode(' ', $line, 2);
         }
 
+        $command = strtoupper($command);
+
         switch ($command) {
             case 'HELO':
                 $this->push('250 ' . $this->server->getDomain());
