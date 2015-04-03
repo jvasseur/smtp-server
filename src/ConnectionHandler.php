@@ -97,7 +97,7 @@ class ConnectionHandler
             case 'MAIL':
                 if ($this->mail !== null) {
                     $this->push('503 Error: nested MAIL command');
-                } elseif (preg_match('/^FROM:[ ]+<(.+)>$/', $arg, $matches)) {
+                } elseif (preg_match('/^FROM:[ ]*<(.+)>$/', $arg, $matches)) {
                     $this->mail = new Mail();
                     $this->mail->setFrom($matches[1]);
 
@@ -109,7 +109,7 @@ class ConnectionHandler
             case 'RCPT':
                 if ($this->mail === null) {
                     $this->push('503 Error: need MAIL command');
-                } elseif (preg_match('/^TO:[ ]+<(.+)>$/', $arg, $matches)) {
+                } elseif (preg_match('/^TO:[ ]*<(.+)>$/', $arg, $matches)) {
                     $this->mail->addTo($matches[1]);
 
                     $this->push('250 Ok');
