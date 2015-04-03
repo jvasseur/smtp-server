@@ -129,13 +129,6 @@ class ConnectionHandler
         }
     }
 
-    private function handleData($data)
-    {
-        $data = str_replace("\r\n..", "\r\n.", $data);
-
-        $this->mail->emit('data', [$data]);
-    }
-
     private function push($msg)
     {
         $this->conn->write($msg . "\r\n");
